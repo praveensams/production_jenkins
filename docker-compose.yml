@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+
+  jenkins: 
+    build:
+      context: jenkins
+      dockerfile: jenkins.dockerfile
+    container_name: jenkins
+    volumes:
+      - /hybris/share:/var/jenkins_home
+      - /hybris/code/17:/hybris
+      - /hybris/hybris-code:/hybris_new
+      - /hybris/code/old_files/hybris:/6.5.0.4
+    ports:
+      - 8080:8080
+    networks:
+      - jenkins
+    links:
+      - sonar:sonar
+    
+  sonar:
+    build:
+      context: sonar
+      dockerfile: sonar.dockerfile
+    container_name: sonar
+    ports:
+      - 9000:9000
+      - 9092:9092 
+    networks:
+      - jenkins
+ 
+  apache:
+    build:
+      context: apache
+      dockerfile: apache.dockerfile
+    container_name: apache
+    volumes:
+      - /hybris/share/workspace/hybris-package-dev/temp/hybris:/usr/local/apache2/htdocs/daily
+      - /hybris/share/workspace/hybris-package-dev-feature/temp/hybris:/usr/local/apache2/htdocs/feature
+    ports:
+      - 3000:80
+    networks:
+      - jenkins
+    
+
+networks:
+  jenkins:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/24
+  
